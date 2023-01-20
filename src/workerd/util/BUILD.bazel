@@ -5,9 +5,19 @@ wd_cc_library(
     name = "util",
     srcs = glob(
         ["*.c++"],
-        exclude = ["*-test.c++", "capnp-mock.c++"],
+        exclude = [
+            "*-test.c++",
+            "capnp-mock.c++",
+            "sqlite*.c++",
+        ],
     ),
-    hdrs = glob(["*.h"], exclude = ["capnp-mock.h"]),
+    hdrs = glob(
+        ["*.h"],
+        exclude = [
+            "capnp-mock.h",
+            "sqlite*.h"
+        ],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         "@capnp-cpp//src/capnp/compat:http-over-capnp",
@@ -16,6 +26,17 @@ wd_cc_library(
         "@capnp-cpp//src/kj/compat:kj-http",
         "@capnp-cpp//src/kj/compat:kj-tls",
     ],
+)
+
+wd_cc_library(
+    name = "sqlite",
+    srcs = [ "sqlite.c++" ],
+    hdrs = [ "sqlite.h" ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@sqlite3//:sqlite3",
+        "@capnp-cpp//src/kj:kj-async",
+    ]
 )
 
 wd_cc_library(
@@ -34,4 +55,11 @@ wd_cc_library(
     deps = [
         ":util",
     ],
-) for f in glob(["*-test.c++"])]
+) for f in glob(["*-test.c++"], exclude = ["sqlite-*.c++"])]
+
+kj_test(
+    src = "sqlite-test.c++",
+    deps = [
+        ":sqlite",
+    ],
+)
