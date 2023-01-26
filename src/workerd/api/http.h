@@ -88,6 +88,12 @@ public:
   static jsg::Ref<Headers> constructor(jsg::Lock& js, jsg::Optional<Initializer> init);
   kj::Maybe<jsg::ByteString> get(jsg::ByteString name);
   kj::ArrayPtr<jsg::ByteString> getAll(jsg::ByteString name);
+  // getAll is a legacy non-standard extension API that we introduced before
+  // getSetCookie() was defined. We continue to support it for backwards
+  // compatibility but users really ought to be using getSetCookie() now.
+  kj::ArrayPtr<jsg::ByteString> getSetCookie();
+  // The Set-Cookie header is special in that it is the only HTTP header that
+  // is not permitted to by combined into a single instance.
   bool has(jsg::ByteString name);
   void set(jsg::ByteString name, jsg::ByteString value);
   void append(jsg::ByteString name, jsg::ByteString value);
@@ -114,6 +120,7 @@ public:
   JSG_RESOURCE_TYPE(Headers) {
     JSG_METHOD(get);
     JSG_METHOD(getAll);
+    JSG_METHOD(getSetCookie);
     JSG_METHOD(has);
     JSG_METHOD(set);
     JSG_METHOD(append);

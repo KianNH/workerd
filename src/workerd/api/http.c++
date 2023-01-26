@@ -162,14 +162,25 @@ bool Headers::hasLowerCase(kj::StringPtr name) {
 }
 
 kj::Array<Headers::DisplayedHeader> Headers::getDisplayedHeaders() {
-  auto headersCopy = KJ_MAP(mapEntry, headers) {
-    const auto& header = mapEntry.second;
-    return DisplayedHeader {
-      jsg::ByteString(kj::str(header.key)),
-      jsg::ByteString(kj::strArray(header.values, ", "))
-    };
-  };
-  return headersCopy;
+  kj::Vector<Headers::DisplayedHeader> copy;
+  for (auto& entry : headers) {
+    if (entry.first == "set-cookie") {
+      // For set-cookie entries, we iterate each individually without
+      // combining them.
+      for (auto& value : entry.second.values) {
+        copy.add(Headers::DisplayedHeader {
+          .key = jsg::ByteString(kj::str(entry.first)),
+          .value = jsg::ByteString(kj::str(value)),
+        });
+      }
+    } else {
+      copy.add(Headers::DisplayedHeader {
+        .key = jsg::ByteString(kj::str(entry.first)),
+        .value = jsg::ByteString(kj::strArray(entry.second.values, ", "))
+      });
+    }
+  }
+  return copy.releaseAsArray();
 }
 
 jsg::Ref<Headers> Headers::constructor(jsg::Lock& js, jsg::Optional<Initializer> init) {
@@ -227,6 +238,15 @@ kj::Maybe<jsg::ByteString> Headers::get(jsg::ByteString name) {
   }
 }
 
+kj::ArrayPtr<jsg::ByteString> Headers::getSetCookie() {
+  auto iter = headers.find("set-cookie");
+  if (iter == headers.end()) {
+    return nullptr;
+  } else {
+    return iter->second.values.asPtr();
+  }
+}
+
 kj::ArrayPtr<jsg::ByteString> Headers::getAll(jsg::ByteString name) {
   requireValidHeaderName(name);
 
@@ -234,12 +254,7 @@ kj::ArrayPtr<jsg::ByteString> Headers::getAll(jsg::ByteString name) {
     JSG_FAIL_REQUIRE(TypeError, "getAll() can only be used with the header name \"Set-Cookie\".");
   }
 
-  auto iter = headers.find(toLower(kj::mv(name)));
-  if (iter == headers.end()) {
-    return nullptr;
-  } else {
-    return iter->second.values.asPtr();
-  }
+  return getSetCookie();
 }
 
 bool Headers::has(jsg::ByteString name) {
@@ -314,10 +329,19 @@ jsg::Ref<Headers::KeyIterator> Headers::keys(jsg::Lock&) {
   return jsg::alloc<KeyIterator>(IteratorState<jsg::ByteString> { kj::mv(keysCopy) });
 }
 jsg::Ref<Headers::ValueIterator> Headers::values(jsg::Lock&) {
-  auto valuesCopy = KJ_MAP(mapEntry, headers) {
-    return jsg::ByteString(kj::strArray(mapEntry.second.values, ", "));
-  };
-  return jsg::alloc<ValueIterator>(IteratorState<jsg::ByteString> { kj::mv(valuesCopy) });
+  kj::Vector<jsg::ByteString> values;
+  for (auto& entry : headers) {
+    // Set-Cookie headers must be handled specially. They should never be combined into a
+    // single value, so the values iterator must separate them.
+    if (entry.first == "set-cookie") {
+      for (auto& value : entry.second.values) {
+        values.add(jsg::ByteString(kj::str(value)));
+      }
+    } else {
+      values.add(jsg::ByteString(kj::strArray(entry.second.values, ", ")));
+    }
+  }
+  return jsg::alloc<ValueIterator>(IteratorState<jsg::ByteString> { values.releaseAsArray() });
 }
 
 void Headers::forEach(
