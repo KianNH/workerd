@@ -85,6 +85,10 @@ public:
   virtual void teardownLockAcquired() {}
   virtual void teardownFinished() {}
 
+  virtual kj::Maybe<kj::StringPtr> getUuid() {
+    return nullptr;
+  }
+
   enum class StartType: uint8_t {
     // Describes why a worker was started.
 
