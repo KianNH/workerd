@@ -28,7 +28,7 @@
 
 /* eslint-disable */
 
-export function normalizeEncoding(enc: string) {
+export function normalizeEncoding(enc?: string) {
   if (enc == null ||
       enc === "utf8" ||
       enc === "utf-8" ||
@@ -101,7 +101,7 @@ export function slowCases(enc: string) {
     default:
       if (enc === "") return "utf8";
   }
-  return enc;
+  return undefined;
 }
 
 export function spliceOne(list: (string|undefined)[], index: number) {
