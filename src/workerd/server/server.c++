@@ -1526,7 +1526,7 @@ kj::Own<Server::Service> Server::makeWorker(kj::StringPtr name, config::Worker::
         .softLimit = 16ull << 20,
         .hardLimit = 128ull << 20,
         .staleTimeout = 30 * kj::SECONDS,
-        .dirtyKeySoftLimit = 64,
+        .dirtyListByteLimit = 2ull << 20,
         .maxKeysPerRpc = 128,
 
         // For now, we use `neverFlush` to implement in-memory-only actors.

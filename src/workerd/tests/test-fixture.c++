@@ -139,7 +139,7 @@ struct MockIsolateLimitEnforcer final: public IsolateLimitEnforcer {
         .softLimit = 16ull << 20,
         .hardLimit = 128ull << 20,
         .staleTimeout = 30 * kj::SECONDS,
-        .dirtyKeySoftLimit = 64,
+        .dirtyListByteLimit = 2ull << 20,
         .maxKeysPerRpc = 128,
         .neverFlush = true
       };
