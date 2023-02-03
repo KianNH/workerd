@@ -7,6 +7,7 @@ import {
   ERR_OUT_OF_RANGE,
   ERR_INVALID_ARG_TYPE,
   ERR_INVALID_ARG_VALUE,
+  ERR_INVALID_BUFFER_SIZE,
   ERR_UNKNOWN_ENCODING,
 } from 'node-internal:internal_errors';
 
@@ -34,7 +35,9 @@ float32Array[0] = -1; // 0xBF800000
 // check this with `os.endianness()` because that is determined at compile time.
 export const bigEndian = uInt8Float32Array[3] === 0;
 
-export const kMaxLength = 4294967296;
+// Node.js caps it's max length at uint32_t max, we are very intentionally more
+// conservative here, capping at int32_t max.
+export const kMaxLength = 2147483647;
 export const kStringMaxLength = 536870888;
 const MAX_UINT32 = 2 ** 32;
 const kIsBuffer = Symbol('kIsBuffer');
@@ -398,7 +401,7 @@ Buffer.byteLength = byteLength;
 Buffer.prototype.swap16 = function swap16() {
   const len = this.length;
   if (len % 2 !== 0) {
-    throw new RangeError("Buffer size must be a multiple of 16-bits");
+    throw new ERR_INVALID_BUFFER_SIZE(16);
   }
   bufferUtil.swap(this, 16);
   return this;
@@ -407,7 +410,7 @@ Buffer.prototype.swap16 = function swap16() {
 Buffer.prototype.swap32 = function swap32() {
   const len = this.length;
   if (len % 4 !== 0) {
-    throw new RangeError("Buffer size must be a multiple of 32-bits");
+    throw new ERR_INVALID_BUFFER_SIZE(32);
   }
   bufferUtil.swap(this, 32);
   return this;
@@ -416,7 +419,7 @@ Buffer.prototype.swap32 = function swap32() {
 Buffer.prototype.swap64 = function swap64() {
   const len = this.length;
   if (len % 8 !== 0) {
-    throw new RangeError("Buffer size must be a multiple of 64-bits");
+    throw new ERR_INVALID_BUFFER_SIZE(64);
   }
   bufferUtil.swap(this, 64);
   return this;
