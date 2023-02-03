@@ -93,7 +93,7 @@ public:
   // compatibility but users really ought to be using getSetCookie() now.
   kj::ArrayPtr<jsg::ByteString> getSetCookie();
   // The Set-Cookie header is special in that it is the only HTTP header that
-  // is not permitted to by combined into a single instance.
+  // is not permitted to be combined into a single instance.
   bool has(jsg::ByteString name);
   void set(jsg::ByteString name, jsg::ByteString value);
   void append(jsg::ByteString name, jsg::ByteString value);
