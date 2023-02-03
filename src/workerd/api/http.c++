@@ -323,10 +323,20 @@ jsg::Ref<Headers::EntryIterator> Headers::entries(jsg::Lock&) {
   return jsg::alloc<EntryIterator>(IteratorState<DisplayedHeader> { getDisplayedHeaders() });
 }
 jsg::Ref<Headers::KeyIterator> Headers::keys(jsg::Lock&) {
-  auto keysCopy = KJ_MAP(mapEntry, headers) {
-    return jsg::ByteString(kj::str(mapEntry.second.key));
-  };
-  return jsg::alloc<KeyIterator>(IteratorState<jsg::ByteString> { kj::mv(keysCopy) });
+  kj::Vector<jsg::ByteString> keysCopy;
+  for (auto& entry : headers) {
+    // Set-Cookie headers must be handled specially. They should never be combined into a
+    // single value, so the values iterator must separate them. It seems a bit silly, but
+    // the keys iterator can end up having multiple set-cookie instances.
+    if (entry.first == "set-cookie") {
+      for (auto n = 0; n < entry.second.values.size(); n++) {
+        keysCopy.add(jsg::ByteString(kj::str(entry.first)));
+      }
+    } else {
+      keysCopy.add(jsg::ByteString(kj::str(entry.first)));
+    }
+  }
+  return jsg::alloc<KeyIterator>(IteratorState<jsg::ByteString> { keysCopy.releaseAsArray() });
 }
 jsg::Ref<Headers::ValueIterator> Headers::values(jsg::Lock&) {
   kj::Vector<jsg::ByteString> values;
