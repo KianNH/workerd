@@ -493,6 +493,52 @@ KJ_TEST("new Buffer(ArrayBuffer)") {
 }
 
 
+KJ_TEST("Buffer.prototype.indexOf/lastIndexOf") {
+  capnp::MallocMessageBuilder message;
+  auto flags = message.initRoot<CompatibilityFlags>();
+  flags.setNodeJsCompat(true);
+
+  TestFixture fixture({
+    .featureFlags = flags.asReader(),
+    .mainModuleSource = R"SCRIPT(
+      import { Buffer } from 'node:buffer';
+
+      export default {
+        fetch(request) {
+
+          const b = Buffer.from('helloabcabcthere');
+
+          if (b.indexOf('abc') !== 5) {
+            throw new Error('Incorrect index');
+          }
+
+          if (b.indexOf('abc', -8) !== 8) {
+            throw new Error('Incorrect index');
+          }
+
+          if (b.indexOf('abc', 6) !== 8) {
+            throw new Error('Incorrect index');
+          }
+
+          if (b.lastIndexOf('abc') !== 8) {
+            throw new Error('Incorrect last index');
+          }
+
+          if (b.indexOf(Buffer.from('abc')) !== 5) {
+            throw new Error('Incorrect index');
+          }
+
+          return new Response('test');
+        },
+      };
+    )SCRIPT"_kj});
+
+  auto response = fixture.runRequest(kj::HttpMethod::POST, "http://www.example.com"_kj, ""_kj);
+
+  KJ_EXPECT(response.statusCode == 200);
+  KJ_EXPECT(response.body == "test");
+}
+
 
 }  // namespace
 }  // namespace workerd::api

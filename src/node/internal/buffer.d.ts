@@ -20,7 +20,7 @@ export function indexOf(buffer: Uint8Array,
                         value : string | Uint8Array,
                         byteOffset? : number,
                         encoding? : string,
-                        fromEnd? : boolean) : number | undefined;
+                        findLast? : boolean) : number | undefined;
 export function swap(buffer: Uint8Array, size: 16|32|64) : void;
 export function toString(buffer: Uint8Array,
                          start: number,

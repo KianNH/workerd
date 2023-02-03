@@ -540,11 +540,15 @@ function bidirectionalIndexOf(
     val: string|number|Buffer|Uint8Array,
     byteOffset?: number|string,
     encoding?: string,
-    fromEnd?: boolean) {
+    findLast?: boolean) {
   let normalizedEncoding : string | undefined;
   if (typeof val === 'number') {
     byteOffset = byteOffset as number | 0;
-    return Uint8Array.prototype.indexOf.call(buf, val as number, byteOffset as number);
+    if (!findLast) {
+      return Uint8Array.prototype.indexOf.call(buf, val as number, byteOffset as number);
+    } else {
+      return Uint8Array.prototype.lastIndexOf.call(buf, val as number, byteOffset as number);
+    }
   } else if (typeof val === 'string') {
     if (typeof byteOffset === 'string') {
       encoding = byteOffset;
@@ -559,7 +563,7 @@ function bidirectionalIndexOf(
   }
   byteOffset = byteOffset as number | 0;
 
-  const result = bufferUtil.indexOf(buf, val, byteOffset as number, normalizedEncoding, fromEnd);
+  const result = bufferUtil.indexOf(buf, val, byteOffset as number, normalizedEncoding, findLast);
   return result == null ? -1 : result;
 };
 

@@ -248,13 +248,14 @@ jsg::Optional<uint32_t> BufferUtil::indexOf(
     kj::OneOf<v8::Local<v8::String>, jsg::BufferSource> value,
     jsg::Optional<int32_t> maybeByteOffset,
     jsg::Optional<kj::String> encoding,
-    bool fromEnd) {
+    bool findLast) {
 
-  auto offset = maybeByteOffset.orDefault(0);
-
-  // TODO(conform): Implement this
-  JSG_REQUIRE(!fromEnd && offset > 0, Error,
-      "buffer.indexOf with a negative index is not yet implemented");
+  int32_t offset = maybeByteOffset.orDefault(0);
+  if (offset < 0) {
+    offset = kj::max(buffer.size() + offset, 0);
+  } else {
+    offset = kj::min(buffer.size(), offset);
+  }
 
   const auto indexOfImpl = [&](kj::ArrayPtr<kj::byte> needle) -> kj::Maybe<uint32_t> {
     if (needle.size() == 0) {
@@ -265,12 +266,16 @@ jsg::Optional<uint32_t> BufferUtil::indexOf(
       return nullptr;
     }
 
-    if (fromEnd && (needle.size() + offset) > buffer.size()) {
+    if ((needle.size() + offset) > buffer.size()) {
       return nullptr;
     }
 
-    const std::boyer_moore_searcher searcher(needle.begin(), needle.end());
-    auto it = std::search(buffer.begin() + offset, buffer.end(), searcher);
+    // TODO(perf): We could be more sophisticated here and use a more efficient
+    // search algorithm rather than using the default. For now, this is good
+    // enough and we can revisit later.
+    auto it = !findLast ?
+        std::search(buffer.begin() + offset, buffer.end(), needle.begin(), needle.end()) :
+        std::find_end(buffer.begin() + offset, buffer.end(), needle.begin(), needle.end());
     if (it == buffer.end()) return nullptr;
     return it - buffer.begin();
   };

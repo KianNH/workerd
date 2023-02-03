@@ -51,7 +51,7 @@ public:
                                             jsg::BufferSource> value,
                                   jsg::Optional<int32_t> byteOffset,
                                   jsg::Optional<kj::String> encoding,
-                                  bool fromEnd = false);
+                                  bool findLast = false);
 
   void swap(jsg::Lock& js, kj::Array<kj::byte> buffer, int size);
 
